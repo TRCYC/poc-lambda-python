@@ -20,7 +20,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_DEFAULT_REGION }}
 
       - name: Set up Docker Buildx
@@ -30,11 +30,10 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
         with:
-          region: ${{ env.AWS_DEFAULT_REGION }}  # Use the region from the environment
+          region: ${{ vars.AWS_DEFAULT_REGION }}  # Use the region from the environment
 
       - name: Build AWS Lambda Image
         env:
-          LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
           echo "Building and Packaging for Build: $GITHUB_RUN_NUMBER"
@@ -42,8 +41,7 @@ jobs:
 
       - name: Push to Amazon ECR
         env:
-          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
-          LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
+          AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
           docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER 558375078907.dkr.ecr.us-east-2.amazonaws.com/trcyc:$GITHUB_RUN_NUMBER
@@ -60,13 +58,13 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # Use the ARN stored in the environment
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}  # Use the region from the environment
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}  # Use the ARN stored in the environment
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}  # Use the region from the environment
 
       - name: Deploy to DEV AWS Lambda
         env:
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-          LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+          AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+          LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
         run: |
           sudo yum update -y && sudo yum install -y jq
