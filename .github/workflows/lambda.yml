@@ -43,7 +43,12 @@ jobs:
           ./.github/workflows/generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=${{ secrets.PASSWORD }}"
           
           echo "Updating Lambda environment variables"
+          echo "JSON_OUTPUT_FILE is set to: $JSON_OUTPUT_FILE"
           aws lambda update-function-configuration --function-name $LAMBDA_FUNCTION_NAME --environment file://$JSON_OUTPUT_FILE
           
+          sleep 30  
+
           echo "Updating Lambda function code"
-          aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest --publish
+          for i in {1..5}; do
+            aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest --publish && break || echo "Retrying in 10 seconds..." && sleep 10
+          done
