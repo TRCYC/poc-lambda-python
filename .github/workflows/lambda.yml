@@ -13,6 +13,7 @@ jobs:
       name: dev
     env:
       AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_DEFAULT_REGION2: ${{ env.AWS_DEFAULT_REGION }}
       AWS_ARN: ${{ secrets.AWS_ROLE_ARN }} 
       LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
     steps:
@@ -21,10 +22,15 @@ jobs:
 
       - name: Check if secret is set
         run: |
-          if [ -z "$AWS_DEFAULT_REGION" ]; then
+          if [ -z "${{ env.AWS_DEFAULT_REGION }}" ]; then
             echo "Secret AWS_DEFAULT_REGION is NOT set"
           else
             echo "Secret AWS_DEFAULT_REGION is set"
+          fi
+          if [ -z "${{ env.AWS_DEFAULT_REGION2 }}" ]; then
+            echo "Secret AWS_DEFAULT_REGION2 is NOT set"
+          else
+            echo "Secret AWS_DEFAULT_REGION2 is set"
           fi
     
       - name: Configure AWS credentials
