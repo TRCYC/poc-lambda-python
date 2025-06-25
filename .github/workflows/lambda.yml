@@ -32,25 +32,30 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Create ECR repository if it doesn't exist
+        env:
+          ECR_REPO_NAME: trcyc/${{ env.LAMBDA_FUNCTION_NAME }}
+        run: |
+          aws ecr describe-repositories --repository-names $ECR_REPO_NAME || \
+          aws ecr create-repository --repository-name $ECR_REPO_NAME
+          
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
         with:
           region: ${{ vars.AWS_DEFAULT_REGION }}  # Use the region from the environment
 
-      - name: Build AWS Lambda Image
+      - name: Build, Tag, and Push Docker Image
         env:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
-          echo "Building and Packaging for Build: $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER"
-          docker build -t $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER -t $LAMBDA_FUNCTION_NAME .
+          echo "Building Docker image for $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER"
+          docker build -t $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER .
 
-      - name: Push to Amazon ECR
-        env:
-          AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
-        run: |
+          echo "Tagging Docker image for ECR"
           docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
+
+          echo "Pushing Docker image to ECR"
           docker push $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
           
   deploy_dev:
