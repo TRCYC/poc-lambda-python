@@ -54,9 +54,11 @@ jobs:
 
           echo "Tagging Docker image for ECR"
           docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
+          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest
 
           echo "Pushing Docker image to ECR"
           docker push $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
+          docker push $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest
           
   deploy_dev:
     runs-on: ubuntu-latest
@@ -78,7 +80,6 @@ jobs:
           LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
         run: |
-          sudo yum update -y && sudo yum install -y jq
           echo "Preparing Lambda environment variables for dev"
           CONFIG_FILE="config.dev.properties"
           JSON_OUTPUT_FILE="${CONFIG_FILE%.properties}.json"
