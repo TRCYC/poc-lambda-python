@@ -12,6 +12,9 @@ declare -A new_env_vars
 while IFS='=' read -r key value; do
   # Skip empty lines or lines starting with #
   [[ -z "$key" || "$key" =~ ^# ]] && continue
+  # Trim whitespace from key and value
+  key=$(echo "$key" | xargs)
+  value=$(echo "$value" | xargs)
   new_env_vars["$key"]="$value"
 done < "$config_file"
 
@@ -21,6 +24,9 @@ while (( "$#" )); do
   # Split each argument into key=value, preserving '=' in the value
   key="${1%%=*}"
   value="${1#*=}"
+  # Trim whitespace from key and value
+  key=$(echo "$key" | xargs)
+  value=$(echo "$value" | xargs)
   new_env_vars["$key"]="$value"
   shift
 done
