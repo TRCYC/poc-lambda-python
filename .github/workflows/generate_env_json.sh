@@ -14,16 +14,15 @@ json_output_file="${config_file%.properties}.json"
 # Declare an associative array to hold environment variables
 declare -A new_env_vars
 
-# Read key-value pairs from the config file
-while IFS='=' read -r key value; do
+# Read key-value pairs from the config file, ensuring the last line is processed
+while IFS='=' read -r key value || [ -n "$key" ]; do
   # Skip empty lines or lines starting with #
   [[ -z "$key" || "$key" =~ ^# ]] && continue
   # Trim whitespace from key and value
   key=$(echo "$key" | xargs)
   value=$(echo "$value" | xargs)
   new_env_vars["$key"]="$value"
-  echo "Read from config: $key=$value"  # Debugging output
-done < "$config_file"
+done < <(cat "$config_file"; echo)  # Append a newline to ensure the last line is read
 
 # Add additional environment variables from script arguments
 shift # Skip the first argument (config_file)
