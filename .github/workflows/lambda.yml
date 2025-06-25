@@ -5,6 +5,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+env:
+  AWS_DEFAULT_REGION2: ${{ secrets.AWS_DEFAULT_REGION }}
 
 jobs:
   build:
@@ -13,7 +15,6 @@ jobs:
       name: dev
     env:
       AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-      AWS_DEFAULT_REGION2: ${{ env.AWS_DEFAULT_REGION }}
       AWS_ARN: ${{ secrets.AWS_ROLE_ARN }} 
       LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
     steps:
