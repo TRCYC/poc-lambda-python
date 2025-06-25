@@ -24,6 +24,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Install dos2unix
+        run: sudo apt-get install -y dos2unix
+
+      - name: Prepare Environment Variables JSON
+        run: |
+          echo "Converting line endings for generate_env_json.sh"
+          dos2unix .github/workflows/generate_env_json.sh
+          
+          echo "Preparing Lambda environment variables for dev"
+          CONFIG_FILE="config.$ENV_NAME.properties"
+          JSON_OUTPUT_FILE="${CONFIG_FILE%.properties}.json"
+          
+          chmod +x .github/workflows/generate_env_json.sh
+          ./.github/workflows/generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=${{ secrets.PASSWORD }}"
+          
+          echo "Generated JSON content:"
+          cat "$JSON_OUTPUT_FILE"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -35,9 +53,5 @@ jobs:
           AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
           LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
         run: |
-          echo "Preparing Lambda environment variables for dev"
-          CONFIG_FILE="config.$ENV_NAME.properties"
-          JSON_OUTPUT_FILE="${CONFIG_FILE%.properties}.json"
-          chmod +x generate_env_json.sh
-          ./generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=${{ secrets.PASSWORD }}" 
+          echo "Updating Lambda function code"
           aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest --publish
