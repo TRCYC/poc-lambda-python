@@ -9,9 +9,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: dev  
+    environment:
+      name: dev
     env:
       AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_ARN: ${{ secrets.AWS_ROLE_ARN }} 
+      LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -27,8 +30,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # Use the ARN stored in the secret
-          aws-region: ${{ secrets.AWS_DEFAULT_REGION }}  # Use the region from the environment
+          role-to-assume: ${{ env.AWS_ARN }}  # Use the ARN stored in the secret
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}  # Use the region from the environment
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -37,11 +40,11 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
         with:
-          region: ${{ secrets.AWS_DEFAULT_REGION }}  # Use the region from the environment
+          region: ${{ env.AWS_DEFAULT_REGION }}  # Use the region from the environment
 
       - name: Build AWS Lambda Image
         env:
-          LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+          LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
           echo "Building and Packaging for Build: $GITHUB_RUN_NUMBER"
@@ -49,8 +52,8 @@ jobs:
 
       - name: Push to Amazon ECR
         env:
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-          LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+          LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
           docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER 558375078907.dkr.ecr.us-east-2.amazonaws.com/trcyc:$GITHUB_RUN_NUMBER
