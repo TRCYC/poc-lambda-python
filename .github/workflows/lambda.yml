@@ -9,19 +9,22 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: dev  # Specify the environment here
+    environment: dev  
+    env:
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_DEFAULT_REGION2: ${{ env.AWS_DEFAULT_REGION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Check if secret is set
         run: |
-          if [ -z "${{ secrets.AWS_DEFAULT_REGION }}" ]; then
+          if [ -z "$AWS_DEFAULT_REGION" ]; then
             echo "Secret AWS_DEFAULT_REGION is NOT set"
           else
             echo "Secret AWS_DEFAULT_REGION is set"
           fi
-          if [ -z "${{ env.AWS_DEFAULT_REGION }}" ]; then
+          if [ -z "$AWS_DEFAULT_REGION2" ]; then
             echo " AWS_DEFAULT_REGION env is NOT set"
           else
             echo " AWS_DEFAULT_REGION env is set"
