@@ -24,42 +24,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Prepare Environment Variables JSON
-        run: |
-          echo "Preparing Lambda environment variables for dev"
-          CONFIG_FILE="config.$ENV_NAME.properties"
-          JSON_OUTPUT_FILE="${CONFIG_FILE%.properties}.json"
-          
-          chmod +x .github/workflows/generate_env_json.sh
-          ./.github/workflows/generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=${{ secrets.PASSWORD }}"
-
-          echo "Generated JSON content:"
-          if [ -f "$JSON_OUTPUT_FILE" ]; then
-            cat "$JSON_OUTPUT_FILE"
-          else
-            echo "Error: JSON output file not created!"
-            exit 1
-          fi
-          
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_DEFAULT_REGION }}
           
-      - name: Deploy to DEV AWS Lambda
+      - name: Deploy to AWS Lambda
         env:
           AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
           LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
         run: |
+          echo "Preparing Lambda environment variables for $ENV_NAME"
+          CONFIG_FILE="config.$ENV_NAME.properties"
+          JSON_OUTPUT_FILE="${CONFIG_FILE%.properties}.json"
+          
+          chmod +x .github/workflows/generate_env_json.sh
+          ./.github/workflows/generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=${{ secrets.PASSWORD }}"
+          
           echo "Updating Lambda environment variables"
-          echo "JSON_OUTPUT_FILE is set to: $JSON_OUTPUT_FILE"
-          if [ -f "$JSON_OUTPUT_FILE" ]; then
-            aws lambda update-function-configuration --function-name $LAMBDA_FUNCTION_NAME --environment file://$JSON_OUTPUT_FILE
-          else
-            echo "Error: JSON output file not found!"
-            exit 1
-          fi
+          aws lambda update-function-configuration --function-name $LAMBDA_FUNCTION_NAME --environment file://$JSON_OUTPUT_FILE
           
           echo "Updating Lambda function code"
           aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest --publish
