@@ -32,6 +32,14 @@ jobs:
           
           chmod +x .github/workflows/generate_env_json.sh
           ./.github/workflows/generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=${{ secrets.PASSWORD }}"
+
+          echo "Generated JSON content:"
+          if [ -f "$JSON_OUTPUT_FILE" ]; then
+            cat "$JSON_OUTPUT_FILE"
+          else
+            echo "Error: JSON output file not created!"
+            exit 1
+          fi
           
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
