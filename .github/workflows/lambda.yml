@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: dev  # Specify the environment here
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -41,6 +42,7 @@ jobs:
 
   deploy_dev:
     runs-on: ubuntu-latest
+    environment: dev  # Specify the environment here
     needs: build
     steps:
       - name: Checkout code
