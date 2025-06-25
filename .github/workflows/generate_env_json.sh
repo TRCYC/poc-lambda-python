@@ -38,15 +38,8 @@ for key in "${!new_env_vars[@]}"; do
 done
 variables_json="${variables_json%,}}"
 
-# Encapsulate in Environment object
-json_string="{\"Environment\": {\"Variables\": $variables_json}}"
-
-# Debug: Print the raw JSON string before processing with jq
-echo "Raw JSON string before jq:"
-echo "$json_string"
-
 # Output the JSON string to a file
-echo "$json_string" | jq -c . > "$json_output_file"
+echo "$variables_json" | jq -c . > "$json_output_file"
 
 # Print the JSON file content
 echo "Generated JSON content:"
