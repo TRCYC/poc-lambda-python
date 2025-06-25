@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
 env:
   AWS_DEFAULT_REGION2: ${{ secrets.AWS_DEFAULT_REGION }}
+  AWS_DEFAULT_REGION3: ${{ vars.AWS_DEFAULT_REGION }}
 
 jobs:
   build:
@@ -14,7 +15,7 @@ jobs:
     environment:
       name: dev
     env:
-      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
       AWS_ARN: ${{ secrets.AWS_ROLE_ARN }} 
       LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
     steps:
@@ -28,10 +29,10 @@ jobs:
           else
             echo "Secret AWS_DEFAULT_REGION is set"
           fi
-          if [ -z "${{ env.AWS_DEFAULT_REGION2 }}" ]; then
-            echo "Secret AWS_DEFAULT_REGION2 is NOT set"
+          if [ -z "${{ env.AWS_DEFAULT_REGION3 }}" ]; then
+            echo "Secret AWS_DEFAULT_REGION3 is NOT set"
           else
-            echo "Secret AWS_DEFAULT_REGION2 is set"
+            echo "Secret AWS_DEFAULT_REGION3 is set"
           fi
     
       - name: Configure AWS credentials
