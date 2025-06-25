@@ -14,6 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}  # Use the ARN stored in the secret
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}  # Use the region from the environment
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -21,7 +27,7 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
         with:
-          region: ${{ env.AWS_DEFAULT_REGION }}  # Ensure this secret is set in your GitHub repository
+          region: ${{ env.AWS_DEFAULT_REGION }}  # Use the region from the environment
 
       - name: Build AWS Lambda Image
         env:
@@ -37,9 +43,9 @@ jobs:
           LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
-          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
-          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
-
+          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER 558375078907.dkr.ecr.us-east-2.amazonaws.com/trcyc:$GITHUB_RUN_NUMBER
+          docker push 558375078907.dkr.ecr.us-east-2.amazonaws.com/trcyc:$GITHUB_RUN_NUMBER
+          
   deploy_dev:
     runs-on: ubuntu-latest
     environment: dev  # Specify the environment here
@@ -48,10 +54,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}  # Use the ARN stored in the environment
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}  # Use the region from the environment
+
       - name: Deploy to DEV AWS Lambda
         env:
           AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
-          AWS_OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
           LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
         run: |
@@ -60,6 +71,6 @@ jobs:
           CONFIG_FILE="config.dev.properties"
           JSON_OUTPUT_FILE="${CONFIG_FILE%.properties}.json"
           chmod +x generate_env_json.sh
-          ./generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=$ENTEGRATE_PASSWORD"
+          ./generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=$PASSWORD"
           aws lambda update-function-configuration --function-name $LAMBDA_FUNCTION_NAME --cli-input-json file://$JSON_OUTPUT_FILE
-          aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/$LAMBDA_FUNCTION_NAME:latest --publish
+          aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri 558375078907.dkr.ecr.us-east-2.amazonaws.com/trcyc:latest --publish
