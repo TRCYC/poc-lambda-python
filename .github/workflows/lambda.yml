@@ -33,9 +33,6 @@ jobs:
           chmod +x .github/workflows/generate_env_json.sh
           ./.github/workflows/generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=${{ secrets.PASSWORD }}"
           
-          echo "Generated JSON content:"
-          cat "$JSON_OUTPUT_FILE"
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -47,5 +44,8 @@ jobs:
           AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
           LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
         run: |
+          echo "Updating Lambda environment variables"
+          aws lambda update-function-configuration --function-name $LAMBDA_FUNCTION_NAME --environment file://$JSON_OUTPUT_FILE
+
           echo "Updating Lambda function code"
           aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest --publish
