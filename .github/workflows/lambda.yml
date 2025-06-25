@@ -45,7 +45,13 @@ jobs:
           LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
         run: |
           echo "Updating Lambda environment variables"
-          aws lambda update-function-configuration --function-name $LAMBDA_FUNCTION_NAME --environment file://$JSON_OUTPUT_FILE
-
+          echo "JSON_OUTPUT_FILE is set to: $JSON_OUTPUT_FILE"
+          if [ -f "$JSON_OUTPUT_FILE" ]; then
+            aws lambda update-function-configuration --function-name $LAMBDA_FUNCTION_NAME --environment file://$JSON_OUTPUT_FILE
+          else
+            echo "Error: JSON output file not found!"
+            exit 1
+          fi
+          
           echo "Updating Lambda function code"
           aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest --publish
