@@ -5,14 +5,58 @@ on:
     branches:
       - main
   workflow_dispatch:
-
+  
 env:
   ECR_REPO: ${{ vars.ECR_REPO }}
-  
 permissions:
-      id-token: write   # This is required for requesting the JWT
+      id-token: write  
       contents: read 
+
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: dev
+    env:
+      LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Create ECR repository if it doesn't exist
+        env:
+          ECR_REPO_NAME: trcyc/${{ env.LAMBDA_FUNCTION_NAME }}
+        run: |
+          aws ecr describe-repositories --repository-names $ECR_REPO_NAME || \
+          aws ecr create-repository --repository-name $ECR_REPO_NAME
+          
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          region: ${{ vars.AWS_DEFAULT_REGION }}
+
+      - name: Build, Tag, and Push Docker Image
+        env:
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          echo "Building Docker image for $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER"
+          docker build -t $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER .
+
+          echo "Tagging & Pushing Docker image to ECR"
+          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
+          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest
+          docker push $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
+          docker push $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest
           
   deploy_dev:
     runs-on: ubuntu-latest
@@ -20,6 +64,7 @@ jobs:
       name: dev
     env:
       ENV_NAME: ${{ vars.ENV }}
+    needs: build
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

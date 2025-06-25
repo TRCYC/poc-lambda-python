@@ -51,5 +51,5 @@ json_string="{\"Variables\": $variables_json}"
 echo "$json_string" | jq -c . > "$json_output_file"
 
 # Print the JSON file content
-echo "Generated JSON content:"
-cat "$json_output_file"
+#echo "Generated JSON content:"
+#cat "$json_output_file"
