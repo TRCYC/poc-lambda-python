@@ -22,6 +22,7 @@ while IFS='=' read -r key value; do
   key=$(echo "$key" | xargs)
   value=$(echo "$value" | xargs)
   new_env_vars["$key"]="$value"
+  echo "Read from config: $key=$value"  # Debugging output
 done < "$config_file"
 
 # Add additional environment variables from script arguments
