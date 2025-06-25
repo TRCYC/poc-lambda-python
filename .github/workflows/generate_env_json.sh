@@ -38,8 +38,11 @@ for key in "${!new_env_vars[@]}"; do
 done
 variables_json="${variables_json%,}}"
 
+# Wrap in Variables object
+json_string="{\"Variables\": $variables_json}"
+
 # Output the JSON string to a file
-echo "$variables_json" | jq -c . > "$json_output_file"
+echo "$json_string" | jq -c . > "$json_output_file"
 
 # Print the JSON file content
 echo "Generated JSON content:"
