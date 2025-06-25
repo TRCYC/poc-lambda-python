@@ -13,56 +13,13 @@ permissions:
       id-token: write   # This is required for requesting the JWT
       contents: read 
 jobs:
-  build:
+          
+  deploy_dev:
     runs-on: ubuntu-latest
     environment:
       name: dev
     env:
-      LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Create ECR repository if it doesn't exist
-        env:
-          ECR_REPO_NAME: trcyc/${{ env.LAMBDA_FUNCTION_NAME }}
-        run: |
-          aws ecr describe-repositories --repository-names $ECR_REPO_NAME || \
-          aws ecr create-repository --repository-name $ECR_REPO_NAME
-          
-      - name: Log in to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        with:
-          region: ${{ vars.AWS_DEFAULT_REGION }}  # Use the region from the environment
-
-      - name: Build, Tag, and Push Docker Image
-        env:
-          GITHUB_RUN_NUMBER: ${{ github.run_number }}
-        run: |
-          echo "Building Docker image for $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER"
-          docker build -t $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER .
-
-          echo "Tagging Docker image for ECR"
-          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
-          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest
-
-          echo "Pushing Docker image to ECR"
-          docker push $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
-          docker push $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest
-          
-  deploy_dev:
-    runs-on: ubuntu-latest
-    environment: dev
+      ENV_NAME: ${{ vars.ENV }}
     needs: build
     steps:
       - name: Checkout code
@@ -78,9 +35,10 @@ jobs:
         env:
           AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
           LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
-          PASSWORD: ${{ secrets.PASSWORD }}
         run: |
           echo "Preparing Lambda environment variables for dev"
-          CONFIG_FILE="config.dev.properties"
+          CONFIG_FILE="config.$ENV_NAME.properties"
           JSON_OUTPUT_FILE="${CONFIG_FILE%.properties}.json"
+          chmod +x generate_env_json.sh
+          ./generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=${{ secrets.PASSWORD }}" 
           aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri $ECR_REPO/$LAMBDA_FUNCTION_NAME:latest --publish
