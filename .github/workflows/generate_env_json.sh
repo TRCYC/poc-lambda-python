@@ -2,6 +2,12 @@
 
 config_file="$1"
 
+# Check if the config file exists
+if [ ! -f "$config_file" ]; then
+  echo "Error: Configuration file '$config_file' not found!"
+  exit 1
+fi
+
 # Generate the output JSON file name by replacing .properties with .json
 json_output_file="${config_file%.properties}.json"
 
