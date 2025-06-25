@@ -50,8 +50,8 @@ jobs:
           AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
-          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER $ECR_REPO:$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
-          docker push $ECR_REPO:$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
+          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
+          docker push $ECR_REPO/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
           
   deploy_dev:
     runs-on: ubuntu-latest
