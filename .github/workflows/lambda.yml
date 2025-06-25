@@ -29,6 +29,15 @@ jobs:
         with:
           role-to-assume: ${{ vars.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+
+      - name: Debugging - Verify Script Location and Permissions
+        run: |
+          echo "Current directory:"
+          pwd
+          echo "Listing contents of .github/workflows:"
+          ls -l .github/workflows
+          echo "Checking permissions for generate_env_json.sh:"
+          ls -l .github/workflows/generate_env_json.sh
           
       - name: Deploy to DEV AWS Lambda
         env:
