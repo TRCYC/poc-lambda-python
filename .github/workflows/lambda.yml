@@ -12,31 +12,16 @@ jobs:
     environment:
       name: dev
     env:
-      AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
-      AWS_ARN: ${{ secrets.AWS_ROLE_ARN }} 
       LAMBDA_FUNCTION_NAME: ${{ vars.LAMBDA_FUNCTION_NAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Check if secret is set
-        run: |
-          if [ -z "${{ env.AWS_DEFAULT_REGION }}" ]; then
-            echo " AWS_DEFAULT_REGION is NOT set"
-          else
-            echo " AWS_DEFAULT_REGION is set"
-          fi
-          if [ -z "${{ env.AWS_ARN }}" ]; then
-            echo "Secret AWS_ARN is NOT set"
-          else
-            echo "Secret AWS_ARN is set"
-          fi
-    
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: ${{ env.AWS_ARN }}  # Use the ARN stored in the secret
-          aws-region: ${{ env.AWS_DEFAULT_REGION }}  # Use the region from the environment
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
