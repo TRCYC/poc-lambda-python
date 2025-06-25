@@ -21,11 +21,11 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
         with:
-          region: ${{ secrets.AWS_DEFAULT_REGION }}  # Ensure this secret is set in your GitHub repository
+          region: ${{ env.AWS_DEFAULT_REGION }}  # Ensure this secret is set in your GitHub repository
 
       - name: Build AWS Lambda Image
         env:
-          LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+          LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
           echo "Building and Packaging for Build: $GITHUB_RUN_NUMBER"
@@ -33,12 +33,12 @@ jobs:
 
       - name: Push to Amazon ECR
         env:
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-          LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+          LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         run: |
-          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
-          docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
+          docker tag $LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
+          docker push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/$LAMBDA_FUNCTION_NAME:$GITHUB_RUN_NUMBER
 
   deploy_dev:
     runs-on: ubuntu-latest
@@ -50,9 +50,9 @@ jobs:
 
       - name: Deploy to DEV AWS Lambda
         env:
-          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
           AWS_OIDC_ROLE_ARN: ${{ secrets.AWS_OIDC_ROLE_ARN }}
-          LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
+          LAMBDA_FUNCTION_NAME: ${{ env.LAMBDA_FUNCTION_NAME }}
           PASSWORD: ${{ secrets.PASSWORD }}
         run: |
           sudo yum update -y && sudo yum install -y jq
@@ -62,4 +62,4 @@ jobs:
           chmod +x generate_env_json.sh
           ./generate_env_json.sh "$CONFIG_FILE" "LAMBDA_FUNCTION_NAME=$LAMBDA_FUNCTION_NAME" "PASSWORD=$ENTEGRATE_PASSWORD"
           aws lambda update-function-configuration --function-name $LAMBDA_FUNCTION_NAME --cli-input-json file://$JSON_OUTPUT_FILE
-          aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_DEFAULT_REGION }}.amazonaws.com/$LAMBDA_FUNCTION_NAME:latest --publish
+          aws lambda update-function-code --function-name $LAMBDA_FUNCTION_NAME --image-uri ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com/$LAMBDA_FUNCTION_NAME:latest --publish
