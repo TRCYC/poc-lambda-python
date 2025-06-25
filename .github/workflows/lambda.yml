@@ -24,14 +24,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install dos2unix
-        run: sudo apt-get install -y dos2unix
-
       - name: Prepare Environment Variables JSON
         run: |
-          echo "Converting line endings for generate_env_json.sh"
-          dos2unix .github/workflows/generate_env_json.sh
-          
           echo "Preparing Lambda environment variables for dev"
           CONFIG_FILE="config.$ENV_NAME.properties"
           JSON_OUTPUT_FILE="${CONFIG_FILE%.properties}.json"
